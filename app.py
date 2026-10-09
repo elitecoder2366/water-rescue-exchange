@@ -1,3 +1,4 @@
+from src.qubo_demo import solve_qubo_demo
 import streamlit as st
 import pandas as pd
 from src.water_rescue import demo_fields, recommend_transfers
