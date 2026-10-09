@@ -72,7 +72,7 @@ def _score(bits, options, donor_caps, recipient_needs, fairness_weight=12.0):
     return float(-benefit + fairness_weight * gap + penalty)
 
 
-def _qaoa_bits(options, energy, reps=1, maxiter=35):
+def _qaoa_bits(options, energy, donor_caps, recipient_needs, reps=1, maxiter=35):
     n = len(options)
     if n == 0:
         return []
@@ -136,7 +136,7 @@ def run_scenario(fields, route_capacity_l, drought_factor=1.0, try_hardware=Fals
     exact_energy, exact_bits = min(feasible, key=lambda x: x[0]) if feasible else (0.0, [0] * len(options))
     exact_time = perf_counter() - start
     start = perf_counter()
-    qbits, circuit = _qaoa_bits(options, energy)
+    qbits, circuit = _qaoa_bits(options, energy, donor_caps, needs)
     qaoa_time = perf_counter() - start
     # Independent hard-constraint validation: unsafe candidate is rejected, not auto-repaired.
     qaoa_valid = _feasible(qbits, options, donor_caps, needs)
