@@ -20,6 +20,7 @@ Water Rescue Exchange explores how a simple data-driven application can help use
 - **Water allocation dashboard:** Enter or review water supply and demand information.
 - **Transfer recommendations:** Suggest potential transfers from surplus areas to areas with shortages.
 - **QAOA demo:** Demonstrate a simplified optimization example using Qiskit's local quantum simulator.
+- **Classical baseline comparison:** Compare a greedy baseline, exact classical search, and QAOA simulation on the same small illustrative problem; view objective scores, feasibility, selected transfers, and one-run runtime.
 - **Scenario testing:** Check normal, high-demand, zero-supply, and insufficient-water situations.
 - **Accessible interface:** A Streamlit app makes the prototype easy to try.
 
@@ -33,6 +34,11 @@ Explore a small example of the Quantum Approximate Optimization Algorithm (QAOA)
 
 ### 🧪 Multiple Scenarios
 Try different supply and demand situations to see how the prototype responds. Verify outputs before using them for any real operational decision.
+
+### 📊 Classical vs QAOA Comparison
+Run the benchmark from the app to compare greedy selection, exact classical search (the optimum for this small instance), and QAOA statevector simulation using the same toy objective and capacity limits. Results include water moved, benefit score, objective value, feasibility, selected transfers, and a single measured runtime. You can export the table as CSV.
+
+**Interpretation:** The exact classical search is the reference optimum for this small problem. QAOA is approximate and may not match it. Runtime from a single small simulation is illustrative, not a general performance benchmark, and this demo makes no claim of quantum advantage.
 
 ### 🖥️ Simple User Interface
 Built with Streamlit for an interactive, browser-based experience.
@@ -103,7 +109,7 @@ water-rescue-exchange/
 ├── runtime.txt               # Python runtime version for deployment
 ├── src/
 │   ├── water_rescue.py       # Water-allocation logic
-│   └── quantum_optimizer.py  # QAOA demo using Qiskit
+│   ├── quantum_optimizer.py  # QAOA demo using Qiskit\n│   └── optimization_benchmark.py # Classical baselines vs QAOA comparison
 ├── tests/
 │   └── test_water_rescue.py  # Tests for allocation logic
 └── README.md                 # Project documentation
@@ -137,7 +143,7 @@ This is an educational and hackathon prototype, not a production emergency-respo
 - Integrate reliable, up-to-date water supply and demand data.
 - Add geographic maps and validated transport constraints.
 - Include fairness, priority, and emergency constraints in allocation.
-- Compare optimization results against classical baselines.
+- Compare optimization results against classical baselines (a small demo benchmark is now included).
 - Evaluate whether QAOA offers any practical benefit on appropriately sized benchmark problems.
 
 ## 👥 Project
