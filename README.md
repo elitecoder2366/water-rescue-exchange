@@ -2,9 +2,9 @@
 
 **Smarter Water Distribution • Stronger Communities • A Safer Tomorrow**
 
-Water Rescue Exchange is a hackathon prototype for **water-allocation decision support**. It uses supply and demand information to suggest possible transfers from areas with surplus water to areas facing shortages. It also contains educational QUBO/QAOA examples, a classical-versus-QAOA benchmark, and a fairness-aware drought scenario lab with an independent hard-constraint audit.
+Water Rescue Exchange is a hackathon prototype for **water-allocation decision support**. It uses supply and demand information to suggest possible transfers from areas with surplus water to areas facing shortages. It also contains a **seven-day water availability estimate** using manual water inputs and optional Open-Meteo rainfall forecasts, educational QUBO/QAOA examples, a classical-versus-QAOA benchmark, and a fairness-aware drought scenario lab with an independent hard-constraint audit.
 
-> **Current status:** This is a prototype using editable/demo data. It does not ingest verified live sensor data, certify water allocations, or control physical pumps and gates. Recommendations require human review.
+> **Current status:** This is a prototype using editable/manual inputs and optional external weather forecasts. The rainfall forecast is live weather information, not live reservoir/sensor telemetry; water storage, inflow, and demand remain user-entered estimates. The seven-day forecast is a simplified water-balance calculation, not a trained or validated ML/hydrology model. The app does not certify water allocations or control physical pumps and gates. Recommendations require human review.
 
 [![Hackathon Project](https://img.shields.io/badge/Project-Hackathon-12345A)](https://github.com/elitecoder2366/water-rescue-exchange)
 [![Streamlit](https://img.shields.io/badge/App-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://water-rescue-exchange-cqti59sqcvw7zyto6fa65h.streamlit.app/)
@@ -26,6 +26,7 @@ Water Rescue Exchange explores a data-driven way to help water managers review a
 - **Fairness and safety review:** Inspect basic authorization, deadline, cumulative donor-surplus, recipient-need, and recipient satisfaction-gap checks.
 - **Simulated pump/gate plan:** Preview and export proposed transfer actions without sending commands to equipment.
 - **Scenario testing:** Change example supply, demand, urgency, travel-time, and deadline values.
+- **Seven-day water availability prediction:** Combine manually entered storage, capacity, inflow, demand, and rainfall-capture assumptions with optional Open-Meteo daily rainfall forecasts; view a storage chart, shortage warning, and CSV export. Manual rainfall entry is available as a fallback.
 - **Quantum fairness/drought lab:** Compare exact classical enumeration with local QAOA statevector simulation, stress-test drought assumptions, and independently validate capacity/need constraints.
 - **Optional hardware-access discovery:** Check whether IBM Quantum Runtime credentials and operational backends are available. This is discovery only; no physical quantum job is submitted.
 - **CSV exports:** Save supported results for further review.
@@ -46,6 +47,9 @@ flowchart TD
     R --> P[Simulated Pump/Gate Plan Preview]
     UI --> Q[QUBO / QAOA Learning Demo]
     UI --> B[Greedy vs Exact Search vs QAOA Benchmark]
+    UI --> WP[7-Day Water Availability Forecast]
+    WP --> WX[Open-Meteo Rainfall or Manual Rainfall]
+    WP --> WF[Storage Estimate, Warning, Chart and CSV]
     F --> V[Review Results and Warnings]
     P --> X[CSV Preview / Export]
     B --> C[Metrics and CSV Export]
@@ -60,6 +64,7 @@ flowchart TD
 5. The separate optimization benchmark compares three methods on a small toy problem; it does not replace or validate the full allocation workflow.
 6. The scenario lab scales demo surplus down and unmet demand up to represent drought stress, then compares exact classical enumeration with QAOA simulation on a small candidate set. It reports a simple recipient satisfaction gap and independently rejects QAOA selections that violate modeled hard constraints.
 7. An optional IBM Quantum Runtime account check can report whether credentials/backends are discoverable. The current app does not submit quantum jobs; it always executes the scenario using the local simulator.
+8. The water availability section accepts manual reservoir/storage and demand estimates. It can fetch seven daily rainfall values from Open-Meteo using the selected latitude/longitude, or use rainfall entered manually. A simplified daily water-balance model estimates storage and potential unmet demand for the next seven days.
 
 ### Proposed real-world architecture
 
@@ -110,6 +115,17 @@ Real equipment integration is a separate engineering project. Any future pump/ga
 ### 💧 Water Allocation Dashboard
 
 Review supply and demand values and inspect suggested water transfers. Current scenarios are illustrative and should not be treated as live operational data.
+
+### 🔮 Seven-Day Water Availability Prediction
+
+The **Water availability prediction — next 7 days** section combines manual inputs with optional external rainfall forecast data.
+
+- **Manual water inputs:** Current stored water (L), storage capacity (L), estimated daily base inflow (L), expected daily demand (L), and a user-supplied rainfall capture factor (L per mm).
+- **Real weather option:** Fetches daily precipitation forecasts from the Open-Meteo Forecast API using latitude and longitude. The default coordinates are approximate Hyderabad coordinates; change them to the actual reservoir or field location.
+- **Manual rainfall fallback:** Enter expected rainfall in millimetres for each of the next seven days when live weather data is unavailable.
+- **Results:** Daily estimated storage, storage percentage, estimated unmet demand, potential overflow, a low-storage/shortage warning, a chart, and CSV export.
+- **Calculation:** A transparent water-balance estimate based on previous storage + estimated inflow + rainfall capture − expected demand. Storage is bounded by zero and the entered capacity.
+- **Important limitation:** Rainfall is forecast data, but storage, inflow, demand, and the rainfall capture factor are user assumptions. This is not a trained ML model or a validated hydrological forecast; it omits factors such as evaporation, releases, groundwater, canal losses, and detailed catchment behaviour. Validate assumptions with local data and experts before operational use.
 
 ### ⚛️ QUBO and QAOA Demos
 
@@ -183,6 +199,7 @@ Generate and export a preview plan for proposed transfers. It is **simulation on
 - Python
 - Streamlit
 - Pandas
+- Requests (Open-Meteo API calls)
 - Qiskit
 - SciPy
 - NumPy
