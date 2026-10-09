@@ -94,9 +94,14 @@ def _qaoa_bits(options, energy, donor_caps, recipient_needs, reps=1, maxiter=35)
     result = minimize(expectation, np.random.default_rng(7).uniform(0, np.pi, 2 * reps),
                       method="COBYLA", options={"maxiter": maxiter})
     probs = np.abs(Statevector.from_instruction(circuit(result.x)).data) ** 2
-    # Return the lowest-energy feasible bitstring among sampled statevector support.
+    # Prefer the most probable feasible bitstring; otherwise return the most probable
+    # state and let the independent validator reject it if it violates hard constraints.
     order = np.argsort(probs)[::-1]
-    return [(int(order[0]) >> i) & 1 for i in range(n)], circuit(result.x, measure=True)
+    feasible_states = [int(index) for index in order
+                       if _feasible([(int(index) >> i) & 1 for i in range(n)],
+                                    options, donor_caps, recipient_needs)]
+    selected = feasible_states[0] if feasible_states else int(order[0])
+    return [(selected >> i) & 1 for i in range(n)], circuit(result.x, measure=True)
 
 
 def _fairness_gap(chosen, needs):
@@ -136,7 +141,10 @@ def run_scenario(fields, route_capacity_l, drought_factor=1.0, try_hardware=Fals
     exact_energy, exact_bits = min(feasible, key=lambda x: x[0]) if feasible else (0.0, [0] * len(options))
     exact_time = perf_counter() - start
     start = perf_counter()
-    qbits, circuit = _qaoa_bits(options, energy, donor_caps, needs)
+    if options:
+        qbits, circuit = _qaoa_bits(options, energy, donor_caps, needs)
+    else:
+        qbits, circuit = [], QuantumCircuit(0)
     qaoa_time = perf_counter() - start
     # Independent hard-constraint validation: unsafe candidate is rejected, not auto-repaired.
     qaoa_valid = _feasible(qbits, options, donor_caps, needs)
@@ -157,5 +165,6 @@ def run_scenario(fields, route_capacity_l, drought_factor=1.0, try_hardware=Fals
                  "note": "Unsafe QAOA selections are rejected by the independent validator."},
         "hardware": hardware,
         "hardware_circuit_qubits": len(options),
+        "candidate_limit_applied": len(options) >= 8,
         "note": "Small educational model only. IBM access is checked, but this run executes on the local simulator; no hardware job is submitted.",
     }
