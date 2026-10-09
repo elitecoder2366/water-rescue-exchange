@@ -88,7 +88,6 @@ st.markdown(
 )
 
 st.caption("Water Rescue Exchange · Hackathon prototype · Simulated data only")
-```python
 st.divider()
 st.header("🧮 QUBO Water Allocation Demo")
 
