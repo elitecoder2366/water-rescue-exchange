@@ -88,3 +88,34 @@ st.markdown(
 )
 
 st.caption("Water Rescue Exchange · Hackathon prototype · Simulated data only")
+```python
+st.divider()
+st.header("🧮 QUBO Water Allocation Demo")
+
+st.info(
+    "Educational QUBO demo solved using classical exhaustive search. "
+    "No quantum hardware or QAOA execution is used."
+)
+
+if st.button("Run QUBO Demo"):
+    try:
+        fields = demo_fields()
+        result = solve_qubo_demo(fields)
+
+        st.write("**Solver method:**", result["method"])
+        st.write("**Status:**", result["status"])
+        st.write("**QUBO variables:**", result["qubo_variables"])
+        st.write("**Best energy:**", result["best_energy"])
+
+        if result["transfers"]:
+            st.subheader("Recommended transfers")
+            st.dataframe(result["transfers"], use_container_width=True)
+        else:
+            st.warning("No eligible transfers found.")
+
+        st.caption("Classical simulation only — not a quantum hardware result.")
+
+    except Exception as e:
+        st.error(f"QUBO demo failed: {e}")
+```
+
