@@ -2,7 +2,7 @@
 
 **Smarter Water Distribution • Stronger Communities • A Safer Tomorrow**
 
-Water Rescue Exchange is a hackathon prototype for **water-allocation decision support**. It uses supply and demand information to suggest possible transfers from areas with surplus water to areas facing shortages. It also contains educational QUBO/QAOA examples and a small classical-versus-QAOA benchmark.
+Water Rescue Exchange is a hackathon prototype for **water-allocation decision support**. It uses supply and demand information to suggest possible transfers from areas with surplus water to areas facing shortages. It also contains educational QUBO/QAOA examples, a classical-versus-QAOA benchmark, and a fairness-aware drought scenario lab with an independent hard-constraint audit.
 
 > **Current status:** This is a prototype using editable/demo data. It does not ingest verified live sensor data, certify water allocations, or control physical pumps and gates. Recommendations require human review.
 
@@ -55,7 +55,7 @@ flowchart TD
 2. The allocation logic proposes candidate transfers according to its implemented prototype rules.
 3. The app presents recommendations and a basic audit to help identify selected allocation issues.
 4. The user can inspect a simulated pump/gate action plan and export supported results.
-5. The separate optimization benchmark compares three methods on a small toy problem; it does not replace or validate the full allocation workflow.
+5. The separate optimization benchmark compares three methods on a small toy problem; it does not replace or validate the full allocation workflow.\n6. The scenario lab scales demo surplus down and unmet demand up to represent drought stress, then compares exact classical enumeration with QAOA simulation on a small candidate set. It reports a simple recipient satisfaction gap and independently rejects QAOA selections that violate modeled hard constraints.\n7. An optional IBM Quantum Runtime account check can report whether credentials/backends are discoverable. The current app does not submit quantum jobs; it always executes the scenario using the local simulator.
 
 ### Proposed real-world architecture
 
@@ -115,7 +115,7 @@ QUBO is a way to express a simplified optimization problem. The QAOA demo uses Q
 - **Simplified formulation:** Real allocation requires richer data and validated constraints.
 - **No quantum advantage claim:** QAOA is not claimed to be faster or better than classical methods in this project.
 
-### 📊 Classical vs QAOA Comparison
+### ⚛️ Combined Quantum Allocation, Fairness & Drought Scenario Lab\n\nThe new scenario lab uses the currently edited demo fields to create a small set of candidate donor-to-recipient transfers. A drought slider reduces listed donor surplus and increases recipient need. It compares exact classical enumeration with a QAOA statevector simulation using an objective that rewards urgency-weighted delivery and includes a soft penalty for recipient satisfaction imbalance.\n\n- **Hard constraints are rechecked independently:** donor capacity and recipient need are validated after optimization; invalid QAOA selections are not displayed as approved transfers.\n- **Fairness is only a proxy:** the satisfaction gap is not a guarantee of equitable distribution and the soft objective penalty cannot replace policy or human review.\n- **Bounded demo size:** candidate options are capped to keep statevector simulation tractable. Results are illustrative, not operational advice.\n- **Hardware discovery, not hardware execution:** the optional IBM Quantum Runtime check reports whether credentials and operational backends are available. The current scenario run does not submit a physical quantum job. Simulator fallback is always available.\n\n### 📊 Classical vs QAOA Comparison
 
 The small benchmark compares greedy selection, exact classical search, and QAOA statevector simulation using the same toy objective and capacity limits. Results include objective value, water moved, feasibility, selected transfers, and a single measured runtime. A CSV export is available.
 
