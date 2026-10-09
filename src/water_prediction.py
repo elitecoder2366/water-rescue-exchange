@@ -86,7 +86,7 @@ def build_seven_day_forecast(
         raw_storage = storage + total_inflow - float(daily_demand_l)
         overflow = max(0.0, raw_storage - float(storage_capacity_l))
         storage = min(float(storage_capacity_l), max(0.0, raw_storage))
-        shortage = max(0.0, float(daily_demand_l) - (storage + total_inflow))
+        shortage = max(0.0, -raw_storage)
         rows.append({
             "Date": day + timedelta(days=i + 1),
             "Forecast rainfall (mm)": round(float(rainfall), 2),
