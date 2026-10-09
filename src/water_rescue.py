@@ -16,6 +16,7 @@ def audit_allocation(fields, transfers):
     by_id = {row["field"]: row for row in fields}
     delivered = {name: 0.0 for name in by_id}
     violations = []
+    sent_by_donor = {name: 0.0 for name in by_id}
     for transfer in transfers:
         donor = transfer.get("donor")
         recipient = transfer.get("recipient")
@@ -27,8 +28,11 @@ def audit_allocation(fields, transfers):
             violations.append(f"{donor}: self-transfer is not allowed.")
         if quantity <= 0:
             violations.append(f"{donor} → {recipient}: transfer quantity must be positive.")
-        if quantity > float(by_id[donor].get("surplus_l", 0)):
-            violations.append(f"{donor}: transfer exceeds the listed safe surplus.")
+        sent_by_donor[donor] += max(0.0, quantity)
+        if sent_by_donor[donor] > float(by_id[donor].get("surplus_l", 0)):
+            violations.append(f"{donor}: cumulative transfers exceed the listed safe surplus.")
+        if quantity > max(0.0, float(by_id[recipient].get("need_l", 0)) - delivered.get(recipient, 0.0)):
+            violations.append(f"{recipient}: transfer exceeds remaining listed need.")
         if not bool(by_id[donor].get("authorized", False)) or not bool(by_id[recipient].get("authorized", False)):
             violations.append(f"{donor} → {recipient}: authorization is missing.")
         if float(by_id[recipient].get("travel_min", 0)) > float(by_id[recipient].get("deadline_min", 0)):
