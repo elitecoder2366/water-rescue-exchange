@@ -4,6 +4,7 @@ import pandas as pd
 
 from src.water_rescue import demo_fields, recommend_transfers
 from src.qubo_demo import solve_qubo_demo
+from src.optimization_benchmark import run_optimization_comparison
 
 st.set_page_config(
     page_title="Water Rescue Exchange",
@@ -51,117 +52,57 @@ edited = st.data_editor(
     hide_index=True,
     num_rows="fixed",
     column_config={
-        "field": st.column_config.TextColumn(
-            "Field", disabled=True
-        ),
-        "surplus_l": st.column_config.NumberColumn(
-            "Safe surplus (L)", min_value=0, step=1
-        ),
-        "need_l": st.column_config.NumberColumn(
-            "Unmet need (L)", min_value=0, step=1
-        ),
-        "urgency": st.column_config.NumberColumn(
-            "Urgency (1–10)", min_value=1, max_value=10, step=1
-        ),
-        "travel_min": st.column_config.NumberColumn(
-            "Travel time (min)", min_value=0, step=1
-        ),
-        "deadline_min": st.column_config.NumberColumn(
-            "Deadline (min)", min_value=0, step=1
-        ),
-        "authorized": st.column_config.CheckboxColumn(
-            "Transfer authorized"
-        ),
+        "field": st.column_config.TextColumn("Field", disabled=True),
+        "surplus_l": st.column_config.NumberColumn("Safe surplus (L)", min_value=0, step=1),
+        "need_l": st.column_config.NumberColumn("Unmet need (L)", min_value=0, step=1),
+        "urgency": st.column_config.NumberColumn("Urgency (1–10)", min_value=1, max_value=10, step=1),
+        "travel_min": st.column_config.NumberColumn("Travel time (min)", min_value=0, step=1),
+        "deadline_min": st.column_config.NumberColumn("Deadline (min)", min_value=0, step=1),
+        "authorized": st.column_config.CheckboxColumn("Transfer authorized"),
     },
 )
 
-# ---------------- SUMMARY METRICS ----------------
-
 col1, col2, col3 = st.columns(3)
-
-col1.metric(
-    "Total safe surplus",
-    f"{edited['surplus_l'].sum():g} L",
-)
-
-col2.metric(
-    "Total unmet need",
-    f"{edited['need_l'].sum():g} L",
-)
-
-col3.metric(
-    "Authorized fields",
-    int(edited["authorized"].sum()),
-)
+col1.metric("Total safe surplus", f"{edited['surplus_l'].sum():g} L")
+col2.metric("Total unmet need", f"{edited['need_l'].sum():g} L")
+col3.metric("Authorized fields", int(edited["authorized"].sum()))
 
 # ---------------- CLASSICAL ALLOCATION ----------------
 
 st.header("2. 💧 Water transfer recommendations")
 
-if st.button(
-    "Find feasible transfers",
-    type="primary",
-    use_container_width=True,
-):
+if st.button("Find feasible transfers", type="primary", use_container_width=True):
     try:
         recommendations, rejected = recommend_transfers(
             edited.to_dict(orient="records"),
             route_capacity_l=float(route_capacity),
         )
-
         st.session_state["recommendations"] = recommendations
         st.session_state["rejected"] = rejected
-
     except Exception as e:
         st.error(f"Transfer calculation failed: {e}")
 
 if "recommendations" in st.session_state:
     recs = st.session_state["recommendations"]
     rejected = st.session_state.get("rejected", [])
-
     if recs:
         result_df = pd.DataFrame(recs)
-
         c1, c2, c3 = st.columns(3)
-
-        c1.metric(
-            "Recommended water",
-            f"{result_df['quantity_l'].sum():g} L",
-        )
-
-        c2.metric(
-            "Transfers proposed",
-            len(result_df),
-        )
-
-        c3.metric(
-            "Recipients helped",
-            result_df["recipient"].nunique(),
-        )
-
-        st.dataframe(
-            result_df,
-            use_container_width=True,
-            hide_index=True,
-        )
-
+        c1.metric("Recommended water", f"{result_df['quantity_l'].sum():g} L")
+        c2.metric("Transfers proposed", len(result_df))
+        c3.metric("Recipients helped", result_df["recipient"].nunique())
+        st.dataframe(result_df, use_container_width=True, hide_index=True)
         st.download_button(
             "⬇️ Download transfer report (CSV)",
             data=result_df.to_csv(index=False).encode("utf-8"),
             file_name="water_transfer_recommendations.csv",
             mime="text/csv",
         )
-
     else:
         st.info("No feasible transfers found for the current inputs.")
-
     with st.expander("Why some transfers were rejected"):
         if rejected:
-            st.dataframe(
-                pd.DataFrame(rejected),
-                use_container_width=True,
-                hide_index=True,
-            )
+            st.dataframe(pd.DataFrame(rejected), use_container_width=True, hide_index=True)
         else:
             st.write("No candidate transfers were rejected.")
 
@@ -169,7 +110,6 @@ if "recommendations" in st.session_state:
 
 st.divider()
 st.header("3. 🧮 QUBO water allocation demo")
-
 st.markdown(
     """
     QUBO means **Quadratic Unconstrained Binary Optimization**.
@@ -177,15 +117,10 @@ st.markdown(
     combinations with an energy function.
     """
 )
-
-st.info(
-    "Classical simulation only. This section does not execute QAOA "
-    "and does not connect to quantum hardware."
-)
-
+st.info("Classical simulation only. This section does not execute QAOA and does not connect to quantum hardware.")
 st.caption(
-    "The QUBO demo uses the currently edited fields, but its simplified "
-    "model does not replace all the feasibility checks in the main allocator."
+    "The QUBO demo uses the currently edited fields, but its simplified model "
+    "does not replace all the feasibility checks in the main allocator."
 )
 
 if st.button("Run QUBO Demo", use_container_width=True):
@@ -193,35 +128,22 @@ if st.button("Run QUBO Demo", use_container_width=True):
         qubo_fields = [
             {
                 "name": str(row["field"]),
-                "available_water": float(row["surplus_l"])
-                + float(row["need_l"]),
+                "available_water": float(row["surplus_l"]) + float(row["need_l"]),
                 "water_need": float(row["need_l"]),
-                "deadline_hours": max(
-                    float(row["deadline_min"]) / 60.0,
-                    1.0 / 60.0,
-                ),
+                "deadline_hours": max(float(row["deadline_min"]) / 60.0, 1.0 / 60.0),
             }
             for row in edited.to_dict(orient="records")
             if bool(row["authorized"])
         ]
-
         result = solve_qubo_demo(qubo_fields)
-
         st.write("**Solver method:**", result["method"])
         st.write("**Status:**", result["status"])
         st.write("**QUBO variables:**", result["qubo_variables"])
         st.write("**Best energy:**", result["best_energy"])
-
         if result["transfers"]:
             qubo_df = pd.DataFrame(result["transfers"])
-
             st.subheader("QUBO candidate transfers")
-            st.dataframe(
-                qubo_df,
-                use_container_width=True,
-                hide_index=True,
-            )
-
+            st.dataframe(qubo_df, use_container_width=True, hide_index=True)
             st.download_button(
                 "⬇️ Download QUBO report (CSV)",
                 data=qubo_df.to_csv(index=False).encode("utf-8"),
@@ -230,20 +152,40 @@ if st.button("Run QUBO Demo", use_container_width=True):
             )
         else:
             st.info("No eligible QUBO transfer options found.")
-
-        st.caption(
-            "These are educational classical-search results, "
-            "not quantum-computer results."
-        )
-
+        st.caption("These are educational classical-search results, not quantum-computer results.")
     except Exception as e:
         st.error(f"QUBO demo failed: {e}")
+
+# ---------------- CLASSICAL VS QAOA BENCHMARK ----------------
+
+st.divider()
+st.header("4. 📊 Compare QAOA with classical baselines")
+st.markdown(
+    "This benchmark compares greedy selection, exact classical search, and the QAOA "
+    "statevector simulation on the same small illustrative transfer problem. It is a "
+    "separate benchmark instance, not the editable field table above."
+)
+
+if st.button("Run optimization comparison", use_container_width=True):
+    try:
+        with st.spinner("Running classical baselines and QAOA simulation..."):
+            comparison = run_optimization_comparison()
+        comparison_df = pd.DataFrame(comparison["results"])
+        st.dataframe(comparison_df, use_container_width=True, hide_index=True)
+        st.caption(comparison["note"])
+        st.download_button(
+            "⬇️ Download optimization comparison (CSV)",
+            data=comparison_df.to_csv(index=False).encode("utf-8"),
+            file_name="optimization_comparison.csv",
+            mime="text/csv",
+        )
+    except Exception as e:
+        st.error(f"Optimization comparison failed: {e}")
 
 # ---------------- PROJECT LIMITATIONS ----------------
 
 st.divider()
-st.header("4. ℹ️ What this prototype does")
-
+st.header("5. ℹ️ What this prototype does")
 st.markdown(
     """
     **Included**
@@ -253,43 +195,14 @@ st.markdown(
     - Transfer authorization input
     - CSV export
     - Educational QUBO model with classical exhaustive search
+    - Small benchmark comparing greedy, exact classical search, and QAOA simulation
 
     **Not yet implemented**
     - Live sensor readings
     - Real canal hydraulics and water-rights validation
     - Production-grade fairness and safety constraints
-    - Actual QAOA execution or quantum hardware integration
+    - Physical quantum hardware integration
     - Automatic pump or irrigation-gate control
     """
 )
-
-st.caption(
-    "Water Rescue Exchange | Hackathon prototype | Simulated data"
-)
-
-st.header("⚛️ Quantum Optimization — QAOA Demo")
-st.write(
-    "QAOA quantum circuit ni local simulator lo run chestunnam. "
-    "Idi physical quantum hardware run kaadu."
-)
-
-if st.button("Run QAOA Quantum Simulation"):
-    try:
-        with st.spinner("Running quantum simulation..."):
-            result = solve_qaoa_demo()
-
-        st.success("Simulation completed!")
-        st.write("**Method:**", result["method"])
-        st.write("**Selected water:**", result["water_l"], "litres")
-        st.write("**Objective score:**", result["objective"])
-
-        st.subheader("Suggested transfers")
-        if result["transfers"]:
-            st.dataframe(result["transfers"], use_container_width=True)
-        else:
-            st.info("No transfer options selected.")
-
-        st.caption(result["note"])
-
-    except Exception as e:
-        st.error(f"Quantum simulation error: {e}")
+st.caption("Water Rescue Exchange | Hackathon prototype | Simulated data")
