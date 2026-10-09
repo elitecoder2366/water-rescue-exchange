@@ -26,6 +26,8 @@ Water Rescue Exchange explores a data-driven way to help water managers review a
 - **Fairness and safety review:** Inspect basic authorization, deadline, cumulative donor-surplus, recipient-need, and recipient satisfaction-gap checks.
 - **Simulated pump/gate plan:** Preview and export proposed transfer actions without sending commands to equipment.
 - **Scenario testing:** Change example supply, demand, urgency, travel-time, and deadline values.
+- **Quantum fairness/drought lab:** Compare exact classical enumeration with local QAOA statevector simulation, stress-test drought assumptions, and independently validate capacity/need constraints.
+- **Optional hardware-access discovery:** Check whether IBM Quantum Runtime credentials and operational backends are available. This is discovery only; no physical quantum job is submitted.
 - **CSV exports:** Save supported results for further review.
 
 ## 🏗️ Full Solution Architecture
@@ -214,6 +216,14 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+Optional: to enable the IBM Quantum account/backend availability check, install the Runtime package separately:
+
+```bash
+pip install qiskit-ibm-runtime
+```
+
+Configure credentials using IBM Quantum's current official instructions. Never paste API tokens into source files or commit them to GitHub. The app's checkbox only checks account/backend availability; actual hardware job submission is not implemented in this version.
+
 ### 4. Start the app
 
 ```bash
@@ -262,6 +272,7 @@ Before real-world use, involve qualified water-management, hydraulic, safety, cy
 - Add historical reporting, alerts, planned-versus-actual delivery tracking, and audit trails.
 - Pilot in shadow mode before relying on recommendations.
 - Evaluate QAOA on suitable benchmark problems without assuming quantum advantage.
+- Add actual IBM Quantum Runtime SamplerV2 job submission only as a separate future phase, with circuit transpilation, shot-based decoding, timeout/error handling, simulator fallback, and the same independent feasibility audit.
 - Explore equipment integration only after separate safety and cybersecurity validation.
 
 ## 👥 Project
