@@ -117,7 +117,7 @@ st.markdown(
     combinations with an energy function.
     """
 )
-st.info("Classical simulation only. This section does not execute QAOA and does not connect to quantum hardware.")
+st.info("This section solves a simplified QUBO using classical computation. The separate QAOA section demonstrates a quantum optimization algorithm on a simulator. Neither section uses a physical quantum computer.")
 st.caption(
     "The QUBO demo uses the currently edited fields, but its simplified model "
     "does not replace all the feasibility checks in the main allocator."
