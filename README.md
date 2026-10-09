@@ -1,83 +1,150 @@
-# Water Rescue Exchange 💧
+# 💧 Water Rescue Exchange
 
-**A prototype for deadline-aware irrigation water reallocation.**
+**Smarter Water Distribution • Stronger Communities • A Safer Tomorrow**
 
-Water Rescue Exchange explores a practical question: when one field has water it can safely spare, can that water be redirected to another field that needs it more urgently?
+Water Rescue Exchange is a prototype water-allocation platform designed to help communities manage water shortages and emergency situations. It uses supply and demand data to suggest possible transfers from areas with surplus water to areas facing shortages, and includes an educational QAOA optimization demo using Qiskit's local simulator.
 
-This first version is intentionally small. It uses editable demo data and a simple urgency-first greedy rule to recommend transfers that pass basic checks.
+[![Hackathon Project](https://img.shields.io/badge/Project-Hackathon-12345A)](https://github.com/elitecoder2366/water-rescue-exchange)
+[![Streamlit](https://img.shields.io/badge/App-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://water-rescue-exchange-cqti59sqcvw7zyto6fa65h.streamlit.app/)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Qiskit](https://img.shields.io/badge/Quantum_Demo-Qiskit-6929C4)](https://www.ibm.com/quantum/qiskit)
 
-## What works in this version
+## 📌 Problem Statement
 
-- Editable sample data for four fields
-- Donor surplus and recipient unmet-need inputs
-- Basic transfer authorization checks
-- Simplified route-volume limit
-- Deadline-versus-travel-time check
-- Transfer recommendation table and rejected-transfer explanations
-- Unit tests for basic behavior
+Water scarcity and uneven distribution can create serious challenges, especially during emergencies. Different locations may have different water supplies and demand levels, making it difficult to decide where available water should go.
 
-## What is not implemented yet
+Water Rescue Exchange explores how a simple data-driven application can help users review water availability and identify potential transfer recommendations.
 
-- Live sensors or real-time canal data
-- Real hydraulic modelling or a calibrated canal network
-- Farmer accounts or legal water-rights integration
-- QAOA or any quantum solver
-- Physical gate control
+## 💡 Our Solution
 
-All included values are illustrative. The app is not intended to make real irrigation decisions.
+- **Water allocation dashboard:** Enter or review water supply and demand information.
+- **Transfer recommendations:** Suggest potential transfers from surplus areas to areas with shortages.
+- **QAOA demo:** Demonstrate a simplified optimization example using Qiskit's local quantum simulator.
+- **Scenario testing:** Check normal, high-demand, zero-supply, and insufficient-water situations.
+- **Accessible interface:** A Streamlit app makes the prototype easy to try.
 
-## Run locally
+## ✨ Key Features
 
-Install Python 3.10 or newer, open a terminal in this folder, and run:
+### 💧 Water Allocation Dashboard
+Review water supply and demand values and view suggested water transfers.
+
+### ⚛️ QAOA Optimization Demo
+Explore a small example of the Quantum Approximate Optimization Algorithm (QAOA). The demo runs in software using a local simulator; it does **not** use a physical quantum computer.
+
+### 🧪 Multiple Scenarios
+Try different supply and demand situations to see how the prototype responds. Verify outputs before using them for any real operational decision.
+
+### 🖥️ Simple User Interface
+Built with Streamlit for an interactive, browser-based experience.
+
+## 🧰 Tech Stack
+
+- Python
+- Streamlit
+- Pandas
+- Qiskit
+- SciPy
+- NumPy
+- Pytest
+
+## 🚀 Live Demo
+
+Try the deployed application:
+
+**https://water-rescue-exchange-cqti59sqcvw7zyto6fa65h.streamlit.app/**
+
+## 🛠️ Run Locally
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/elitecoder2366/water-rescue-exchange.git
+cd water-rescue-exchange
+```
+
+### 2. (Recommended) Create a virtual environment
 
 ```bash
 python -m venv .venv
 ```
 
-On Windows PowerShell:
+Activate it on Windows:
 
 ```powershell
 .venv\Scripts\Activate.ps1
 ```
 
-Then install dependencies and start the app:
+Or on macOS/Linux:
 
 ```bash
-python -m pip install -r requirements.txt
-python -m streamlit run app.py
+source .venv/bin/activate
 ```
 
-Run tests:
+### 3. Install dependencies
 
 ```bash
-python -m pytest -q
+pip install -r requirements.txt
 ```
 
-## Project layout
+### 4. Start the app
+
+```bash
+streamlit run app.py
+```
+
+Streamlit will print a local URL in your terminal; open it in your browser.
+
+## 📁 Project Structure
 
 ```text
-app.py                  Streamlit interface
-src/water_rescue.py     Basic transfer recommendation logic
-tests/                  Unit tests
-docs/                   Design notes and references
+water-rescue-exchange/
+├── app.py                    # Main Streamlit application
+├── requirements.txt          # Python dependencies
+├── runtime.txt               # Python runtime version for deployment
+├── src/
+│   ├── water_rescue.py       # Water-allocation logic
+│   └── quantum_optimizer.py  # QAOA demo using Qiskit
+├── tests/
+│   └── test_water_rescue.py  # Tests for allocation logic
+└── README.md                 # Project documentation
 ```
 
-## Planned work
+## ⚛️ QAOA Demo: What It Does (and Doesn't Do)
 
-1. Improve donor surplus estimation using remaining crop needs and safety reserves.
-2. Model shared canal segments and time-dependent capacity.
-3. Compare the greedy rule with a classical optimization solver.
-4. Formulate a small constrained transfer problem for an experimental QAOA comparison.
-5. Add sensor integration only after simulation and safety tests work.
+The Quantum Approximate Optimization Algorithm (QAOA) is a hybrid quantum-classical optimization approach. In this project, Qiskit simulates a small quantum circuit locally, while a classical optimizer adjusts parameters to search for a candidate solution to a simplified example.
 
-## Why compare against classical methods?
+- **Simulator only:** No physical quantum hardware is used.
+- **Illustrative example:** The demo uses a simplified problem and should not be treated as a complete optimizer for real-world water distribution.
+- **No proven quantum advantage:** This project does not claim that QAOA is faster or better than classical optimization.
+- **Further validation needed:** A real deployment would require realistic data, operational constraints, fairness and safety checks, and expert evaluation.
 
-A quantum-inspired or quantum solver should not be assumed to outperform a classical method. Any QAOA experiment will be compared on the same test cases against a classical baseline, with feasibility and runtime reported.
+## 🧪 Testing
 
-## References
+If the project includes the test dependencies, run:
 
-See [`docs/references.md`](docs/references.md) for related repositories and research starting points.
+```bash
+pytest
+```
 
-## Safety note
+Review the test results and manually try several scenarios in the app before presenting the prototype.
 
-This is an educational prototype. Any real transfer would require farmer consent, applicable allocation permissions, measured physical availability, hydraulic validation, and independent safety checks.
+## ⚠️ Limitations and Responsible Use
+
+This is an educational and hackathon prototype, not a production emergency-response system. Recommendations should be validated against real-world conditions and reviewed by relevant water-management experts before any operational use.
+
+## 🌍 Future Improvements
+
+- Integrate reliable, up-to-date water supply and demand data.
+- Add geographic maps and validated transport constraints.
+- Include fairness, priority, and emergency constraints in allocation.
+- Compare optimization results against classical baselines.
+- Evaluate whether QAOA offers any practical benefit on appropriately sized benchmark problems.
+
+## 👥 Project
+
+**Repository:** https://github.com/elitecoder2366/water-rescue-exchange  
+**Live app:** https://water-rescue-exchange-cqti59sqcvw7zyto6fa65h.streamlit.app/
+
+---
+
+**💙 Save Water • Save Lives**
