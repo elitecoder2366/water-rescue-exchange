@@ -1,4 +1,3 @@
-```python
 """Small QUBO water-transfer demo.
 Uses classical exhaustive search, NOT quantum hardware.
 """
@@ -117,4 +116,3 @@ def solve_qubo_demo(fields, unit_liters=10):
         "best_energy": round(best_energy, 3),
         "quantum_hardware_used": False,
     }
-```
