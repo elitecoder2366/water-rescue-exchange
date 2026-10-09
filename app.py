@@ -116,5 +116,4 @@ if st.button("Run QUBO Demo"):
 
     except Exception as e:
         st.error(f"QUBO demo failed: {e}")
-```
 
