@@ -1,3 +1,4 @@
+from src.quantum_optimizer import solve_qaoa_demo
 import streamlit as st
 import pandas as pd
 
@@ -265,3 +266,30 @@ st.markdown(
 st.caption(
     "Water Rescue Exchange | Hackathon prototype | Simulated data"
 )
+
+st.header("⚛️ Quantum Optimization — QAOA Demo")
+st.write(
+    "QAOA quantum circuit ni local simulator lo run chestunnam. "
+    "Idi physical quantum hardware run kaadu."
+)
+
+if st.button("Run QAOA Quantum Simulation"):
+    try:
+        with st.spinner("Running quantum simulation..."):
+            result = solve_qaoa_demo()
+
+        st.success("Simulation completed!")
+        st.write("**Method:**", result["method"])
+        st.write("**Selected water:**", result["water_l"], "litres")
+        st.write("**Objective score:**", result["objective"])
+
+        st.subheader("Suggested transfers")
+        if result["transfers"]:
+            st.dataframe(result["transfers"], use_container_width=True)
+        else:
+            st.info("No transfer options selected.")
+
+        st.caption(result["note"])
+
+    except Exception as e:
+        st.error(f"Quantum simulation error: {e}")
