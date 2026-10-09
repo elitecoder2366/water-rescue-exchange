@@ -324,3 +324,117 @@ else:
     st.info("Run 'Find feasible transfers' first to see the fairness review and simulated control preview.")
 
 st.caption("Water Rescue Exchange | Hackathon prototype | Simulated data")
+
+
+# ---------------- SEVEN-DAY WATER AVAILABILITY PREDICTION ----------------
+
+st.divider()
+st.header("8. 🔮 Water availability prediction — next 7 days")
+st.markdown(
+    "Enter your reservoir/field estimates manually and optionally use the Open-Meteo "
+    "daily rainfall forecast. The forecast is a transparent water-balance estimate, "
+    "not a trained machine-learning model or a guaranteed supply prediction."
+)
+
+from src.water_prediction import fetch_rainfall_forecast, build_seven_day_forecast
+
+with st.expander("How this estimate works", expanded=False):
+    st.write(
+        "Each day: previous storage + estimated base inflow + rainfall × capture factor − "
+        "expected demand. Storage is capped at the entered capacity. The rainfall capture "
+        "factor is a user-entered estimate in litres per millimetre; calibrate it for your "
+        "catchment/reservoir. This simplified model does not simulate evaporation, releases, "
+        "groundwater, canal losses, or complex hydrology."
+    )
+
+p1, p2, p3 = st.columns(3)
+with p1:
+    current_storage = st.number_input("Current stored water (L)", min_value=0.0, value=50000.0, step=1000.0, key="pred_storage")
+    storage_capacity = st.number_input("Total storage capacity (L)", min_value=1.0, value=100000.0, step=1000.0, key="pred_capacity")
+with p2:
+    base_inflow = st.number_input("Expected base inflow per day (L)", min_value=0.0, value=5000.0, step=500.0, key="pred_inflow")
+    daily_demand = st.number_input("Expected water use per day (L)", min_value=0.0, value=7000.0, step=500.0, key="pred_demand")
+with p3:
+    capture_factor = st.number_input(
+        "Rain capture factor (L per mm)",
+        min_value=0.0, value=100.0, step=10.0, key="pred_capture",
+        help="Estimate how many litres enter storage per 1 mm of rainfall. Use 0 if rainfall does not add measurable storage."
+    )
+    rain_source = st.radio("Rainfall input", ["Live weather forecast", "Enter rainfall manually"], key="pred_rain_source")
+
+if rain_source == "Live weather forecast":
+    wx1, wx2 = st.columns(2)
+    with wx1:
+        latitude = st.number_input("Location latitude", min_value=-90.0, max_value=90.0, value=17.3850, format="%.4f", key="pred_lat")
+    with wx2:
+        longitude = st.number_input("Location longitude", min_value=-180.0, max_value=180.0, value=78.4867, format="%.4f", key="pred_lon")
+    st.caption("Default coordinates are Hyderabad. Change them to your reservoir/field location.")
+    if st.button("Fetch 7-day rainfall forecast", key="fetch_rain_btn"):
+        try:
+            with st.spinner("Fetching daily rainfall forecast..."):
+                weather_df = fetch_rainfall_forecast(latitude, longitude)
+            st.session_state["prediction_rainfall"] = weather_df
+            st.session_state["prediction_rain_source_label"] = "Open-Meteo live weather forecast"
+        except Exception as e:
+            st.error(f"Weather data could not be fetched: {e}")
+            st.info("Switch to 'Enter rainfall manually' to continue without the weather service.")
+    if "prediction_rainfall" in st.session_state:
+        rainfall_df = st.session_state["prediction_rainfall"].copy()
+        st.caption("Rainfall source: Open-Meteo. Forecast can change and may not represent local microclimates.")
+        st.dataframe(rainfall_df, use_container_width=True, hide_index=True)
+        rainfall_values = rainfall_df["Forecast rainfall (mm)"].astype(float).tolist()
+    else:
+        rainfall_values = None
+        st.info("Click 'Fetch 7-day rainfall forecast' before calculating, or choose manual rainfall input.")
+else:
+    st.caption("Enter expected daily rainfall in millimetres for each of the next seven days.")
+    manual_rain = []
+    rain_cols = st.columns(7)
+    for day_idx, rain_col in enumerate(rain_cols, start=1):
+        with rain_col:
+            manual_rain.append(
+                st.number_input(f"Day {day_idx} (mm)", min_value=0.0, value=0.0, step=1.0, key=f"pred_manual_rain_{day_idx}")
+            )
+    rainfall_values = manual_rain
+
+if st.button("Calculate 7-day water availability", type="primary", key="calc_water_prediction"):
+    try:
+        if rainfall_values is None:
+            st.error("Fetch weather rainfall data first, or switch to manual rainfall input.")
+        else:
+            forecast_df = build_seven_day_forecast(
+                current_storage_l=float(current_storage),
+                storage_capacity_l=float(storage_capacity),
+                daily_base_inflow_l=float(base_inflow),
+                daily_demand_l=float(daily_demand),
+                rainfall_mm=[float(x) for x in rainfall_values],
+                rainfall_capture_l_per_mm=float(capture_factor),
+            )
+            st.session_state["water_availability_forecast"] = forecast_df
+    except Exception as e:
+        st.error(f"Could not calculate forecast: {e}")
+
+if "water_availability_forecast" in st.session_state:
+    forecast_df = st.session_state["water_availability_forecast"]
+    final_storage = float(forecast_df.iloc[-1]["Forecast storage (L)"])
+    min_storage_pct = float(forecast_df["Storage available (%)"].min())
+    total_unmet = float(forecast_df["Estimated unmet demand (L)"].sum())
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Storage after 7 days", f"{final_storage:,.0f} L")
+    m2.metric("Lowest forecast storage", f"{min_storage_pct:.1f}%")
+    m3.metric("Estimated unmet demand", f"{total_unmet:,.0f} L")
+    if min_storage_pct < 20 or total_unmet > 0:
+        st.warning("Shortage risk: forecast storage becomes low or demand may not be fully met. Review inputs and plan with local water managers.")
+    else:
+        st.success("The simple model does not indicate a shortage under the entered assumptions.")
+    chart_df = forecast_df.set_index("Date")[["Forecast storage (L)"]]
+    st.line_chart(chart_df)
+    st.dataframe(forecast_df, use_container_width=True, hide_index=True)
+    st.download_button(
+        "⬇️ Download 7-day water availability forecast (CSV)",
+        data=forecast_df.to_csv(index=False).encode("utf-8"),
+        file_name="water_availability_7_day_forecast.csv",
+        mime="text/csv",
+        key="download_water_prediction",
+    )
+
