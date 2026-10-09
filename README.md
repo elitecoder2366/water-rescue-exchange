@@ -294,3 +294,15 @@ Before real-world use, involve qualified water-management, hydraulic, safety, cy
 ---
 
 **💙 Save Water • Save Lives**
+
+## Seven-day water availability prediction
+
+The Streamlit app includes a **Water availability prediction — next 7 days** section. It supports:
+
+- Manual inputs for current stored water, storage capacity, estimated daily base inflow, daily demand, and rainfall capture factor.
+- Optional daily rainfall forecast from the Open-Meteo Forecast API (no API key required); users enter latitude/longitude. Defaults are approximate Hyderabad coordinates and should be changed to the actual site.
+- Manual rainfall entry for each of the next seven days if live weather is unavailable.
+- A daily storage estimate, low-storage/shortage warning, chart, and CSV export.
+
+The forecast uses a transparent, simplified water-balance calculation; it is **not a trained ML model or a validated hydrological forecast**. Results depend on user assumptions and weather forecast quality. It does not account for evaporation, releases, groundwater, canal losses, or detailed catchment hydrology, and must not be used as the sole basis for real-world water allocation.
+
