@@ -2,7 +2,7 @@ from src.quantum_optimizer import solve_qaoa_demo
 import streamlit as st
 import pandas as pd
 
-from src.water_rescue import demo_fields, recommend_transfers
+from src.water_rescue import demo_fields, recommend_transfers, audit_allocation, build_simulated_control_plan
 from src.qubo_demo import solve_qubo_demo
 from src.optimization_benchmark import run_optimization_comparison
 
@@ -205,4 +205,57 @@ st.markdown(
     - Automatic pump or irrigation-gate control
     """
 )
+# ---------------- FAIRNESS, SAFETY & SIMULATED CONTROL ----------------
+
+st.divider()
+st.header("6. 🛡️ Fairness & safety review")
+st.warning(
+    "These are prototype checks, not production-grade safety controls. "
+    "Review results with water-management experts before any real-world use."
+)
+
+if "recommendations" in st.session_state:
+    audit = audit_allocation(edited.to_dict(orient="records"), st.session_state["recommendations"])
+    if audit["checks_passed"]:
+        st.success("The selected recommendations passed the implemented prototype audit.")
+    else:
+        st.error("The prototype audit found issues that need review.")
+        st.write(audit["violations"])
+    st.metric("Recipient satisfaction gap", audit["fairness_gap"])
+    st.caption(
+        "Fairness gap is the difference between the highest and lowest capped "
+        "need-satisfaction ratios among recipients with nonzero need. It is a simple indicator, "
+        "not a complete fairness measure."
+    )
+    satisfaction_rows = []
+    for row in edited.to_dict(orient="records"):
+        need = float(row["need_l"])
+        delivered = audit["delivered_l"].get(row["field"], 0.0)
+        satisfaction_rows.append({
+            "Field": row["field"],
+            "Need (L)": need,
+            "Recommended (L)": delivered,
+            "Need satisfied (%)": round(min(100.0, delivered / need * 100), 1) if need > 0 else None,
+        })
+    st.dataframe(pd.DataFrame(satisfaction_rows), use_container_width=True, hide_index=True)
+
+    st.subheader("🚰 Simulated pump / irrigation-gate control preview")
+    st.info(
+        "Preview only: this app is not connected to pumps, gates, PLCs, or IoT devices. "
+        "No physical command will be sent."
+    )
+    plan = build_simulated_control_plan(st.session_state["recommendations"])
+    if plan:
+        st.dataframe(pd.DataFrame(plan), use_container_width=True, hide_index=True)
+        st.download_button(
+            "⬇️ Download simulated control plan (CSV)",
+            data=pd.DataFrame(plan).to_csv(index=False).encode("utf-8"),
+            file_name="simulated_control_plan.csv",
+            mime="text/csv",
+        )
+    else:
+        st.info("No transfer recommendations are available to preview.")
+else:
+    st.info("Run 'Find feasible transfers' first to see the fairness review and simulated control preview.")
+
 st.caption("Water Rescue Exchange | Hackathon prototype | Simulated data")
