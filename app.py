@@ -5,6 +5,7 @@ import pandas as pd
 from src.water_rescue import demo_fields, recommend_transfers, audit_allocation, build_simulated_control_plan
 from src.qubo_demo import solve_qubo_demo
 from src.optimization_benchmark import run_optimization_comparison
+from src.quantum_allocation import run_scenario, hardware_status
 
 st.set_page_config(
     page_title="Water Rescue Exchange",
@@ -182,10 +183,74 @@ if st.button("Run optimization comparison", use_container_width=True):
     except Exception as e:
         st.error(f"Optimization comparison failed: {e}")
 
+# ---------------- FAIRNESS-AWARE QUANTUM SCENARIO LAB ----------------
+
+st.divider()
+st.header("5. ⚛️ Quantum allocation + fairness + drought lab")
+st.markdown(
+    "Reuses the project's QAOA/statevector approach for a small scenario built from the edited fields. "
+    "A classical exact-search baseline is run on the same candidate options, and selected transfers "
+    "are independently checked against hard capacity/need constraints."
+)
+drought = st.slider(
+    "Drought stress: available surplus (%)",
+    min_value=50, max_value=100, value=100, step=10,
+    help="Lower surplus and raise unmet demand in this illustrative stress test."
+)
+use_hardware_check = st.checkbox("Check optional IBM Quantum hardware account", value=False)
+st.caption("Hardware check only: this prototype does not submit jobs to a physical quantum backend.")
+if st.button("Run quantum + fairness + drought scenario", use_container_width=True):
+    try:
+        with st.spinner("Comparing exact classical search and QAOA simulator..."):
+            scenario = run_scenario(
+                edited.to_dict(orient="records"),
+                float(route_capacity),
+                drought_factor=drought / 100.0,
+                try_hardware=use_hardware_check,
+            )
+        st.subheader("Scenario parameters")
+        st.json(scenario["scenario"])
+        left, right = st.columns(2)
+        with left:
+            st.markdown("**Classical baseline**")
+            st.metric("Objective (lower is better)", scenario["classical"]["objective"])
+            st.metric("Feasible", str(scenario["classical"]["feasible"]))
+            st.metric("Fairness gap", scenario["classical"]["fairness_gap"])
+            st.caption(f"Runtime: {scenario['classical']['runtime_s']} s")
+            st.dataframe(pd.DataFrame(scenario["classical"]["transfers"]), use_container_width=True, hide_index=True)
+        with right:
+            st.markdown("**QAOA simulator**")
+            st.metric("Objective (lower is better)", scenario["qaoa"]["objective"])
+            st.metric("Independent feasibility audit", str(scenario["qaoa"]["feasible"]))
+            st.metric("Fairness gap", scenario["qaoa"]["fairness_gap"])
+            st.caption(f"Runtime: {scenario['qaoa']['runtime_s']} s")
+            st.dataframe(pd.DataFrame(scenario["qaoa"]["transfers"]), use_container_width=True, hide_index=True)
+        if use_hardware_check:
+            st.info(scenario["hardware"]["message"])
+        st.warning(scenario["note"])
+        rows = []
+        for method in ("classical", "qaoa"):
+            item = scenario[method]
+            rows.append({
+                "Method": item["method"], "Objective": item["objective"],
+                "Feasible": item["feasible"], "Fairness gap": item["fairness_gap"],
+                "Runtime (s)": item["runtime_s"],
+                "Transfers": "; ".join(x["route"] for x in item["transfers"]),
+            })
+        scenario_df = pd.DataFrame(rows)
+        st.download_button(
+            "⬇️ Download quantum scenario comparison (CSV)",
+            data=scenario_df.to_csv(index=False).encode("utf-8"),
+            file_name="quantum_drought_fairness_comparison.csv",
+            mime="text/csv",
+        )
+    except Exception as e:
+        st.error(f"Quantum scenario lab failed: {e}")
+
 # ---------------- PROJECT LIMITATIONS ----------------
 
 st.divider()
-st.header("5. ℹ️ What this prototype does")
+st.header("6. ℹ️ What this prototype does")
 st.markdown(
     """
     **Included**
@@ -208,7 +273,7 @@ st.markdown(
 # ---------------- FAIRNESS, SAFETY & SIMULATED CONTROL ----------------
 
 st.divider()
-st.header("6. 🛡️ Fairness & safety review")
+st.header("7. 🛡️ Fairness & safety review")
 st.warning(
     "These are prototype checks, not production-grade safety controls. "
     "Review results with water-management experts before any real-world use."
